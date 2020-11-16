@@ -1,0 +1,259 @@
+---
+title: "Git_PopOver65"
+author: "Raquel Baltazar"
+date: "`r format(Sys.time(), '%a %d %b %Y (%H:%M:%S)')`"
+output:
+  html_document:
+    theme: united
+    highlight: tango
+    toc: yes
+    toc_depth: 3
+    toc_float: yes
+  pdf_document:
+    toc: yes
+    toc_depth: '3'
+  word_document:
+    toc: yes
+    toc_depth: '3'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+```
+
+
+```{r install_packs}
+pkg1 <-"https://cran.r-project.org/src/contrib/Archive/RefManageR/RefManageR_1.2.12.tar.gz"
+install.packages(pkg1, repos = NULL, type = "source")
+
+pkg2 <-"https://cran.r-project.org/src/contrib/Archive/eurostat/eurostat_3.6.1.tar.gz"
+install.packages(pkg2, repos = NULL, type = "source")
+
+```
+
+
+
+
+```{r library}
+library(eurostat)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(magrittr)
+library(data.table)
+library(here)
+library(countrycode)
+library(gganimate)
+theme_set(theme_bw())
+library(gapminder)
+library(data.table)
+library(dplyr)
+```
+
+```{r query}
+
+query <- search_eurostat(pattern = "Proportion of population aged 65 and over", 
+                         type = "table", fixed = FALSE)
+query[, 1:2]
+```
+
+```{r ct_and_ptandeu}
+
+ct <-  c("AT", "BE", "BG", "CH", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI", "FR", "HR","HU", "IE", "IS", "IT", "LI", "LT","LU", "LV", "MT", "NL", "NO", "PL", "PT","RO", "SE", "SI", "SK", "UK")
+
+PTandEU <-  c("PT","EU27_2020")
+```
+
+```{r get_eurostat}
+
+
+dat <- get_eurostat(id="tps00028", time_format = "num", 
+                    filters = list (geo = ct))
+dat [1:2,]
+
+dat1<- get_eurostat(id="tps00028", time_format = "num", 
+                    filters = list (geo = PTandEU))
+                    
+dat1 [1:2,]
+
+```
+
+
+```{r label}
+dat <- label_eurostat (dat)
+dat[1:3,]
+
+
+dat1 <- label_eurostat (dat1)
+dat1[1:3,]
+```
+
+```{r clean_dat_dat1}
+
+setDT(dat)
+
+setDT(dat1)
+
+dat[, c("unit", "nace_r2"):=NULL]
+
+dat1[, c("unit", "nace_r2"):=NULL]
+
+setDT(dat)
+
+setDT(dat1)
+```
+
+# Proportion of the population 65 and over, 2008 to 2019
+
+```{r eurostat_and_plots}
+
+ggplot(dat, 
+       aes(x = time, y= values, color = geo, label = geo)) + 
+  geom_line (alpha = .5) +
+  geom_text (data = dat %>% group_by(geo) %>% 
+               filter(time == max(time)),
+             size =2.6) +
+  theme(legend.position = "none") + 
+  labs(title = "Proportion of people 65 and over",
+       x= "Year", y= "%")
+```
+
+## in an animated line graph
+
+```{r animated_line}
+
+ggplot(dat, aes(time, values, color = geo, label = geo)) +
+  geom_line(alpha = .5) +
+  geom_text (data = dat %>% group_by(geo) %>% 
+               filter(time == max(time)),
+             size =2.6) +
+  theme(legend.position = "none") + 
+  scale_color_viridis_d() +
+  labs(x = "Year", y = "Proportion of people 65 and over") +
+  theme(legend.position = "top") + 
+  labs(title = "Proportion of people 65 and over",
+       x= "Year", y= "%") +
+  transition_reveal(time) +
+  geom_point() +
+  transition_reveal(time)
+```
+
+
+# Portugal vs. European Union, 2002-2019
+
+```{r PT_vs_EU}
+
+pteu <-  c("European Union - 27 countries (from 2020)","Portugal")
+
+library(ggplot2)
+library(dplyr)
+ggplot(dat1, 
+       aes(x = time, y= values, color = geo, label = geo)) + 
+  geom_line (alpha = .5) +
+  geom_text (data = dat1 %>% group_by(geo) %>% 
+               filter(time == max(time)),
+             size =2.6) +
+  theme(legend.position = "none") + 
+  labs(title = "Proportion of people 65 and over",
+       x= "Year", y= "%")
+```
+
+
+
+```{r ptvseu_animated}
+
+ggplot(dat1, aes(time, values, color = geo, label = geo)) +
+  geom_line(alpha = .5) +
+  geom_text (data = dat1 %>% group_by(geo) %>% 
+               filter(time == max(time)),
+             size =2.6) +
+  theme(legend.position = "none") + 
+  scale_color_viridis_d() +
+  labs(x = "Year", y = "Gender Pay Gap") +
+  theme(legend.position = "top") + 
+  labs(title = "Proportion of people 65 and over",
+       x= "Year", y= "%") +
+  transition_reveal(time) +
+  geom_point() +
+  transition_reveal(time)
+
+
+```
+
+# Then vs Now (bar chart and map)
+
+## Proportion of people 65 and over in 2008
+
+### Bar Chart
+
+```{r bar_chart}
+dat_2008 <- dat %>% 
+  filter(time == "2008")
+ggplot (dat_2008, aes(x= reorder(geo, values), y = values)) + 
+  geom_col (color = "white", fill = "grey80") + 
+  theme ( axis.text.x = element_text (size = 6)) + 
+  labs (title = "Proportion of people 65 and over in 2008", 
+        y = "%", x = NULL)
+```
+
+I guess there
+
+```{r map}
+
+mapdata <-get_eurostat_geospatial (nuts_level = 0) %>%
+  right_join (dat_2008) %>% 
+  mutate (cat = cut_to_classes(values, n = 4, decimals = 1)) %>% 
+head(select(mapdata,geo,values,cat), 3)
+
+```
+
+```{r}
+str(mapdata)
+```
+
+
+```{r plot_map}
+ggplot(mapdata, aes(fill = cat)) + 
+  scale_fill_brewer(palette = "RdYlBu") + 
+  geom_sf (color = alpha("white", 1/3), alpha = .6) + 
+  xlim (c(-12,44)) + ylim(c(35, 70)) + 
+  labs( title = "Population above 65 in 2008",
+        subtitle = "Percentage of the population aged 65 or more in 2008",
+        fill = "%")
+```
+
+# Proportion of people 65 and over in 2019
+
+```{r bar_chart_19}
+
+dat_2019 <- dat %>% 
+  filter(time == "2019-01-01")
+ggplot (dat_2019, aes(x= reorder(geo, values), y = values)) + 
+  geom_col (color = "white", fill = "grey80") + 
+  theme ( axis.text.x = element_text (size = 6)) + 
+  labs (title = "Proportion of people 65 and over in 2019", 
+        y = "%", x = NULL)
+```
+
+
+```{r map_19}
+
+mapdata <-  get_eurostat_geospatial(nuts_level = 0) %>% 
+  right_join (dat_2019) %>% 
+  mutate (cat = cut_to_classes (values, n = 4, decimals = 1))
+head(select(mapdata,geo,values,cat), 3)
+
+```
+
+
+```{r plot_map_19}
+ggplot(mapdata, aes(fill = cat)) + 
+  scale_fill_brewer(palette = "RdYlBu") + 
+  geom_sf (color = alpha("white", 1/3), alpha = .6) + 
+  xlim (c(-12,44)) + ylim(c(35, 70)) + 
+  labs( title = "Population above 65 in 2019",
+        subtitle = "Percentage of the population aged 65 or more in 2019",
+        fill = "%")
+```
+
+
