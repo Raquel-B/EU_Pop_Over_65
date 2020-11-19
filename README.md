@@ -1,14 +1,3 @@
----
-title: "Read_Me"
-author: "Raquel Baltazar"
-date: "`r format(Sys.time(), '%a %d %b %Y (%H:%M:%S)')`"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 # Objectives
 
 *Explore the geographical and time trends for population ageing in Portugal and the rest of Europe*
