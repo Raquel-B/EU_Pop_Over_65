@@ -18,7 +18,7 @@ output:
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE, message = FALSE)
+knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
 
@@ -88,20 +88,6 @@ dat1 <- label_eurostat (dat1)
 dat1[1:3,]
 ```
 
-```{r clean_dat_dat1}
-
-setDT(dat)
-
-setDT(dat1)
-
-dat[, c("unit", "nace_r2"):=NULL]
-
-dat1[, c("unit", "nace_r2"):=NULL]
-
-setDT(dat)
-
-setDT(dat1)
-```
 
 # Proportion of the population 65 and over, 2008 to 2019
 
