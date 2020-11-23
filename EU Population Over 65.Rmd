@@ -1,5 +1,5 @@
 ---
-title: "Git_PopOver65"
+title: "EU Population over 65"
 author: "Raquel Baltazar"
 date: "`r format(Sys.time(), '%a %d %b %Y (%H:%M:%S)')`"
 output:
@@ -20,18 +20,6 @@ output:
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
-
-
-```{r install_packs}
-pkg1 <-"https://cran.r-project.org/src/contrib/Archive/RefManageR/RefManageR_1.2.12.tar.gz"
-install.packages(pkg1, repos = NULL, type = "source")
-
-pkg2 <-"https://cran.r-project.org/src/contrib/Archive/eurostat/eurostat_3.6.1.tar.gz"
-install.packages(pkg2, repos = NULL, type = "source")
-
-```
-
-
 
 
 ```{r library}
