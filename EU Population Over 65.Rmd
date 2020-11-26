@@ -21,6 +21,41 @@ output:
 knitr::opts_chunk$set(echo = TRUE, message = FALSE, warning = FALSE)
 ```
 
+**We will use Eurostat’s indicator data for “Proportion of population aged 65 and over” as a case study when working with the data.table R package and apply a few animations using gganimate. The goal is to explore the geographical and time trends for the gender pay gap in the EU and compare Portugal with its countries**
+
+
+We will start by learning how to understand the data and extract it from the Eurostat package within R. We will then process in preparation for some exploratory analysis.*
+
+# Objective
+The objective is to look at the geographical and time trends in the data. We will
+answer the following questions:
+
++ What are the time trends for Portugal?
++ How does Portugal compare to other European countries?
++ Which countries have the highest proportion of the population being 65 and over in Europe by year?
+
+# Understanding the Data
+
+##  Proportion of population aged 65 and over
+% of total population who are aged 65 and over 
+
+## Source 
+online data code: TPS00028
+Source of data: Eurostat
+Last data update: 03/07/2020  22:00 (5 months ago)
+Last structure update: 03/07/2020
+Overall data coverage: 2008 — 2019
+Number of values: 592
+
+source link: https://ec.europa.eu/eurostat/databrowser/view/tps00028/default/table?lang=en
+The source dataset for TPS00028 is:
+DEMO_PJANIND
+https://ec.europa.eu/eurostat/databrowser/product/view/DEMO_PJANIND
+
+**Copyrights:** Eurostat Copyright/Licence Policy is applicable.
+
+
+# Loading Libraries
 
 ```{r library}
 library(eurostat)
@@ -32,11 +67,12 @@ library(data.table)
 library(here)
 library(countrycode)
 library(gganimate)
-theme_set(theme_bw())
 library(gapminder)
 library(data.table)
 library(dplyr)
 ```
+
+# Importing the Data
 
 ```{r query}
 
@@ -51,6 +87,11 @@ ct <-  c("AT", "BE", "BG", "CH", "CY", "CZ", "DE", "DK", "EE", "EL", "ES", "FI",
 
 PTandEU <-  c("PT","EU27_2020")
 ```
+
+# Defining variables dat and dat1
+
+## dat = Every country in the EU separately
+## dat1 = Portugal vs EU
 
 ```{r get_eurostat}
 
@@ -77,7 +118,7 @@ dat1[1:3,]
 ```
 
 
-# Proportion of the population 65 and over, 2008 to 2019
+# Evolution of proportion of the population 65 and over, from 2008 to 2019
 
 ```{r eurostat_and_plots}
 
@@ -92,7 +133,7 @@ ggplot(dat,
        x= "Year", y= "%")
 ```
 
-## in an animated line graph
+## ...The same line graph, but animated
 
 ```{r animated_line}
 
@@ -112,9 +153,24 @@ ggplot(dat, aes(time, values, color = geo, label = geo)) +
   transition_reveal(time)
 ```
 
+## ... in an animated bar chart 
+
+```{r animated_bar_chart1}
+
+ggplot (dat, aes(x= reorder(geo, values), y = values)) + 
+  geom_col (color = "white", fill = "grey80") + 
+  theme ( axis.text.x = element_text (size = 6)) + 
+  labs( title = "Proportion of people 65 and over",
+        subtitle = "Percentage of the total population",
+        fill = "%") + 
+  labs(title = 'Year: {frame_time}') +
+  transition_time(time) +
+  ease_aes()
+```
 
 # Portugal vs. European Union, 2002-2019
 
+## in a line graph
 ```{r PT_vs_EU}
 
 pteu <-  c("European Union - 27 countries (from 2020)","Portugal")
@@ -132,7 +188,7 @@ ggplot(dat1,
        x= "Year", y= "%")
 ```
 
-
+## ... The same line graph, but animated
 
 ```{r ptvseu_animated}
 
@@ -155,10 +211,11 @@ ggplot(dat1, aes(time, values, color = geo, label = geo)) +
 ```
 
 # Then vs Now (bar chart and map)
+Now we compare the first and the latest years [2008 vs. 2019] provided in the dataset individually.  
 
 ## Proportion of people 65 and over in 2008
 
-### Bar Chart
+### ...in a Bar Chart (2008)
 
 ```{r bar_chart}
 dat_2008 <- dat %>% 
@@ -170,34 +227,28 @@ ggplot (dat_2008, aes(x= reorder(geo, values), y = values)) +
         y = "%", x = NULL)
 ```
 
-I guess there
-
+### ...in a Map (2008)
 ```{r map}
-
-mapdata <-get_eurostat_geospatial (nuts_level = 0) %>%
+mapdata <-  get_eurostat_geospatial(nuts_level = 0) %>% 
   right_join (dat_2008) %>% 
-  mutate (cat = cut_to_classes(values, n = 4, decimals = 1)) %>% 
+  mutate (cat = cut_to_classes (values, n = 4, decimals = 1))
 head(select(mapdata,geo,values,cat), 3)
 
 ```
 
-```{r}
-str(mapdata)
-```
-
-
 ```{r plot_map}
+
 ggplot(mapdata, aes(fill = cat)) + 
   scale_fill_brewer(palette = "RdYlBu") + 
   geom_sf (color = alpha("white", 1/3), alpha = .6) + 
   xlim (c(-12,44)) + ylim(c(35, 70)) + 
-  labs( title = "Population above 65 in 2008",
-        subtitle = "Percentage of the population aged 65 or more in 2008",
+  labs( title = "Proportion of people 65 and over in 2008",
         fill = "%")
 ```
 
 # Proportion of people 65 and over in 2019
 
+## ...in a bar chart
 ```{r bar_chart_19}
 
 dat_2019 <- dat %>% 
@@ -209,7 +260,7 @@ ggplot (dat_2019, aes(x= reorder(geo, values), y = values)) +
         y = "%", x = NULL)
 ```
 
-
+# ...in a map
 ```{r map_19}
 
 mapdata <-  get_eurostat_geospatial(nuts_level = 0) %>% 
