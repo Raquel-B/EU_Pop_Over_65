@@ -168,7 +168,7 @@ ggplot (dat, aes(x= reorder(geo, values), y = values)) +
   ease_aes()
 ```
 
-# Portugal vs. European Union, 2002-2019
+# Portugal vs. European Union, 2008-2019
 
 ## in a line graph
 ```{r PT_vs_EU}
