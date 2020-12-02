@@ -174,3 +174,23 @@ pg02 <- PopOver65[geo_code %chin% PTEU] %>%
        caption = "% of total population who are aged 65 and over")
 pg02
 ```
+
+## Proportion of the population 65 and over - Bar Charts
+
+```{r pagaBarPlot}
+PopOver65[time %in% c(2010, 2012, 2014, 2018) & geo_code %chin% ct] %>% 
+ggplot (aes(x= reorder(geo_code, values), y = values)) + 
+  facet_wrap(~time) +
+  geom_col (color = "white", fill = "grey80") + 
+  theme (axis.text.x = element_text (size = 6)) + 
+  gghighlight(geo_code == "PT") +
+  labs(title = "Proportion of the population 65 and over, Over Time",
+       x= "Year", 
+       y= "% of total population",
+       caption = "% of total population who are aged 65 and over") +
+  coord_flip()
+```
+
+## Gender Pay Gap - Bar Charts
+
+**TO DO**
