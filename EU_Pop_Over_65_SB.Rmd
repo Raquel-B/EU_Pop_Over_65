@@ -46,4 +46,131 @@ The source dataset for TPS00028 is: DEMO_PJANIND
 
 The data is **Copyrighted** by Eurostat [Copyright/Licence Policy](http://ec.europa.eu/eurostat/statistics-explained/index.php/Copyright/licence_policy) is applicable.
 
+# Loading Libraries
 
+```{r loadPackges}
+library(eurostat)
+library(data.table)
+library(magrittr)
+library(knitr)
+library(kableExtra)
+library(ggplot2)
+library(ggrepel)
+library(gganimate)
+library(gifski)
+library(gghighlight)
+```
+
+# Data processing
+
+## Download data from Eurostat
+
+Selecting all the available population 65 and over data (indicator code `TPS00028`) from Eurostat.
+
+```{r getData}
+# Get all EU data in one go and keep the country code (`geo_code`)
+PopOver65EU <- get_eurostat(id="tps00028", time_format = "num") %>% 
+  label_eurostat(., code = "geo")
+
+# We will work with the `data.table` package.
+setDT(PopOver65EU)
+
+#_# To do 
+# Best to get the map data first so we can merge it directly to the indicator data.
+# mapEU <- get_eurostat_geospatial(nuts_level = 0)
+# setDT(mapEU)
+
+
+# Update the `geo` variable to make it print and plot friendly.
+PopOver65 <- PopOver65EU[, geo_orig := geo] %>%
+  .[, geo := fifelse(geo_code == "DE", "Germany", geo)] %>%
+  .[, geo := fifelse(grepl("^EU|^EA", geo_code), gsub("_", " ", geo_code), geo)] %>% 
+# Creating a variable geo_label to label lines just once.
+# %>%  .[, lastYear := max(time), .(geo_code)] %>% 
+  .[, geo_label_right := ifelse(time == max(time), geo_code, ""), .(geo_code)] %>% 
+  .[, geo_label_left := ifelse(time == min(time), geo_code, ""), .(geo_code)] %>% 
+  .[, c("nace_r2"):=NULL]
+ #_# To do
+ # mutate (cat = cut_to_classes (values, n = 4, decimals = 1))
+```
+
+We will highlight some countries to compare Portugal with.
+```{r compareCountries}
+# Define a list of countries of interes that will be used later.
+ct <-  c("AT", "BE", "DE", "ES", "FR", "NL", "IT", "PT", "GR", "EU27_2020")
+PTEU <-  c("PT", "EU27_2020")
+```
+
+## Data summaries
+
+Some data summaries to understand the data that we have.
+
+```{r dataSummary}
+# Distinct years
+PopOver65[, c(time)] %>% unique(.) %>% sort(.)
+
+# Information by country
+PopOver65[, .(countryData = sprintf("%2s %15s: %4.0f-%4.0f (%2.0f)", geo_code, geo, min(time), max(time), .N)),
+     .(geo_code, geo)] %>% 
+    .[, c(countryData)] %>% 
+  unique(.) %>%  sort(.)
+```
+
+# Evolution of Proportion of people 65 and over in EU over Time
+
+## Line graph
+
+```{r byCountryLinePlot}
+pg01 <- PopOver65[geo_code %chin% ct] %>% 
+ggplot(aes(x = time, y= values, color = geo, label = geo)) + 
+  geom_line (alpha = .8, size = 1) +
+  geom_point() +
+  scale_y_continuous(breaks = seq(0, 30, 5), limits = c(0,30)) +
+  scale_x_continuous(breaks = seq(2002, 2018, 2), limits = c(2002, 2019)) +
+  theme(legend.position = "none") + 
+  geom_text_repel(aes(label=geo_label_right),
+                  direction = "y",
+                  nudge_x = .85,
+                  segement.alpha = 0.2,
+                  segment.color = "grey80") +
+  labs(title = "Proportion of people 65 and over, Over Time",
+       x= "Year", 
+       y= "% of total population",
+       caption = "% of total population who are aged 65 and over")
+
+pg01
+```
+
+## Animated Line graph
+
+```{r byCountryLinePlotAnimated}
+pg01 +
+    geom_text_repel(aes(label=geo_code),
+                  direction = "y",
+                  nudge_x = .75,
+                  segement.alpha = 0.7,
+                  segment.colour = "grey80") +
+  transition_reveal(time) +
+  geom_point()
+```
+
+## Portugal vs. European Union, 2008-2019
+
+```{r PT_vs_EU}
+pg02 <- PopOver65[geo_code %chin% PTEU] %>% 
+  ggplot(aes(x = time, y= values, color = geo, label = geo)) + 
+  geom_line(data = PopOver65, aes(x = time, y= values, group = geo), colour ="grey70", alpha = .5) +
+  geom_line (alpha = .8, size = 1) +
+  scale_y_continuous(breaks = seq(0, 30, 5), limits = c(0,30)) +
+  scale_x_continuous(breaks = seq(2002, 2018, 2), limits = c(2002, 2019)) +
+  theme(legend.position = "none") + 
+  geom_text_repel(aes(label=geo_label_right),
+                  direction = "y",
+                  nudge_x = .45,
+                  segement.alpha = 0.7) +
+  labs(title = "Proportion of the population 65 and over, 2008-2019",
+       x= "Year", 
+       y= "% of total population",
+       caption = "% of total population who are aged 65 and over")
+pg02
+```
